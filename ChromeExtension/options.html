@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head><title>CertVerify Options</title></head>
+<body>
+
+Verification Method:
+<select id="method">
+ <option value="crl">CRL Only</option>
+ <option value="ocsp">OCSP Only</option>
+ <option value="both">CRL and OCSP (Slow)</option>
+
+</select>
+
+<br>
+<label>
+  <input type="checkbox" id="block">
+  Redirect to blank page if cert is revoked
+</label>
+<br>
+<label>
+  <input type="checkbox" id="ocsphardfail">
+  OCSP hard-fail (Consider non responsive responder as revoked cert) 
+</label>
+
+<div id="status"></div>
+<button id="save">Save</button>
+
+<script src="options.js"></script>
+</body>
+</html>

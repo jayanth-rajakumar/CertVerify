@@ -1,0 +1,28 @@
+{
+  "manifest_version": 2,
+  "name": "CertVerify",
+  "description": "Verifies CRL of HTTPS pages using a background Python server.",
+  "version": "1.0",
+
+ 
+  "browser_action": {
+    
+    "default_popup": "popup.html"
+  },
+  "background": {
+    "scripts": ["background.js"],
+    "persistent": true
+  },
+  "permissions": [
+    "tabs",
+    "http://localhost:8000/*",
+    "*://developer.mozilla.org/",
+    "<all_urls>",
+    "storage",
+    "webNavigation"
+  ],
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": false
+  }
+}
