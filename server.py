@@ -141,7 +141,7 @@ def handle_crl (hostname):
   except KeyError:
     return ['NOCRL',json_response]
 
-  cdp_path=Path(os.path.join(os.path.dirname(__file__), 'files/' + cdp_hash))
+  cdp_path=Path(os.path.join(os.path.dirname(__file__), 'cache/' + cdp_hash))
   revoked_bool=False
 
   
@@ -151,7 +151,7 @@ def handle_crl (hostname):
 
   else:
 
-    fin=open(os.path.join(os.path.dirname(__file__), 'files/' + cdp_hash),"rb")
+    fin=open(os.path.join(os.path.dirname(__file__), 'cache/' + cdp_hash),"rb")
     rvk_list=pickle.load(fin)
     fin.close()
 
@@ -212,9 +212,9 @@ def handle_ocsp (hostname):
     #"validation_result_short" : validation_result_short
   }
   host_hash=str(hashlib.md5(hostname.encode()).hexdigest())
-  cert_path=os.path.join(os.path.dirname(__file__), 'files/cert_' + host_hash + '.pem')
-  resp_path=os.path.join(os.path.dirname(__file__), 'files/resp_' + host_hash + '.der')
-  issuers_path=os.path.join(os.path.dirname(__file__), 'files/issuers_' + host_hash + '.pem')
+  cert_path=os.path.join(os.path.dirname(__file__), 'cache/cert_' + host_hash + '.pem')
+  resp_path=os.path.join(os.path.dirname(__file__), 'cache/resp_' + host_hash + '.der')
+  issuers_path=os.path.join(os.path.dirname(__file__), 'cache/issuers_' + host_hash + '.pem')
   
 
   fout=open(cert_path,"wb")
@@ -234,9 +234,13 @@ def handle_ocsp (hostname):
       if(access_desc.access_method._name=="OCSP"):
           ocspUrl=access_desc.access_location.value
           
+  ocspDomain=ocspUrl[7:]
+  slash_index=ocspDomain.find('/')
+  if(slash_index != -1):
+    ocspDomain=ocspDomain[0:slash_index]
 
-  cmd_text="openssl ocsp -issuer " + issuers_path + " -cert " + cert_path +  " -text -url " + ocspUrl + " -noverify -no_signature_verify -no_cert_verify -respout " + resp_path + " -header \"HOST\" " + ocspUrl[7:]
-
+  cmd_text="openssl ocsp -issuer " + issuers_path + " -cert " + cert_path +  " -text -url " + ocspUrl + " -noverify -no_signature_verify -no_cert_verify -respout " + resp_path + " -header \"HOST\" " + ocspDomain
+  print(cmd_text)
   try:
     subprocess.check_output(cmd_text,shell=True)   
   except subprocess.CalledProcessError:
@@ -246,7 +250,7 @@ def handle_ocsp (hostname):
 
 
 
-  fin=open(os.path.join(os.path.dirname(__file__), 'files/resp_' + host_hash + '.der'), "rb")
+  fin=open(os.path.join(os.path.dirname(__file__), 'cache/resp_' + host_hash + '.der'), "rb")
   ocsp_resp = x509.ocsp.load_der_ocsp_response(fin.read())
   fin.close()
 
@@ -298,7 +302,7 @@ def load_crl_to_disk (cert,cdp_hash):
   pkl_list.append(nextUpdate.payload[:-1])
   
 
-  fout=open(os.path.join(os.path.dirname(__file__), 'files/' + cdp_hash),"wb")
+  fout=open(os.path.join(os.path.dirname(__file__), 'cache/' + cdp_hash),"wb+")
   pickle.dump(pkl_list,fout)
   fout.close()
 
@@ -306,6 +310,10 @@ def load_crl_to_disk (cert,cdp_hash):
 
 HOST_NAME = 'localhost'
 PORT_NUMBER = 8000
+
+if(not os.path.isdir(os.path.join(os.path.dirname(__file__) , 'cache/'))):
+  os.mkdir(os.path.join(os.path.dirname(__file__) , 'cache/'))
+
 
 
 httpd = HTTPServer((HOST_NAME, PORT_NUMBER), Server)
