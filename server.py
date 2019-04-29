@@ -98,6 +98,7 @@ def crl_buildjson (crl_status,json_response,hostname):
     [ocsp_status,json_response]=handle_ocsp(hostname)
     json_response=ocsp_buildjson(ocsp_status,json_response)
     json_response["crl_validation_result"]="Certfificate does not have a CRL"
+    json_response["validation_result_short"] = "ERR"
   elif (crl_status=='CRLFAIL'):
     json_response["validation_result"] = "CRL - Certificate Revoked"
     json_response["validation_result_short"] = "REV"

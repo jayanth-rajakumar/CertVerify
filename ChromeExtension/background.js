@@ -1,5 +1,6 @@
 // certificate-info
 // Copyright (C) 2017-2018 Yunzhu Li
+// Modifications (C) 2019 Jayanth Rajakumar
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -170,10 +171,32 @@ function updateTab(tab) {
       // Store response
       if (data !== null) {
         cachedValidatonData[hostname] = data;
-        if(data['validation_result_short']=='ERR')
-        {
-          chrome.tabs.update(data.tabId, {url: 'localhost:8000'}); 
-        }
+
+        chrome.storage.sync.get({
+          chosenocsphardfail: false,
+          chosenblock: false
+        }, function(items) {
+          
+          if(data['validation_result_short']=='REV' )
+          {
+            if(items.chosenblock==true)
+            {
+              chrome.tabs.update(data.tabId, {url: 'localhost:8000'});
+             
+            }
+             
+          }
+          else if (data['validation_result_short']=='ERR')
+          {
+            if(items.chosenocsphardfail==true && items.chosenblock==true)
+            {
+             chrome.tabs.update(data.tabId, {url: 'localhost:8000'});
+         
+              
+            }
+          }
+        });
+
       }
       displayPageInfo(tabId, proto, false, data);
     })
