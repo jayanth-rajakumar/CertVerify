@@ -16,7 +16,6 @@
   "permissions": [
     "tabs",
     "http://localhost:8000/*",
-    "cookies",
     "<all_urls>",
     "storage",
     "webNavigation"
