@@ -147,7 +147,7 @@ def handle_crl (hostname):
   
   if(cdp_path.is_file()==False):
 
-    revoked_bool=load_crl_to_disk(cert,cdp_hash)
+    revoked_bool=load_crl_to_disk(cert,cdp_hash) 
 
   else:
 
