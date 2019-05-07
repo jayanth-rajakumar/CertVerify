@@ -270,6 +270,7 @@ function updatePopupData(tabId, data, color, validationResult, message) {
 function fetchCertInfo(hostname, callback) {
   // Create XHR
   var xhr = new XMLHttpRequest();
+  var startTime = new Date();
   xhr.onreadystatechange = function() {
     
     // Only handle event when request is finished
@@ -287,6 +288,9 @@ function fetchCertInfo(hostname, callback) {
     try {
      // chrome.extension.getBackgroundPage().console.log(this.responseText);
       var validationData = JSON.parse(this.responseText);
+      var endTime= new Date();
+      var diffTime=endTime - startTime;
+      console.log(diffTime);
       callback(validationData);
     } catch(e) {
       

@@ -16,7 +16,7 @@
   "permissions": [
     "tabs",
     "http://localhost:8000/*",
-    "*://developer.mozilla.org/",
+    "cookies",
     "<all_urls>",
     "storage",
     "webNavigation"

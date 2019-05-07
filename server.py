@@ -46,8 +46,8 @@ class Server(BaseHTTPRequestHandler):
         json_response["validation_result"] = "CRL and OCSP Verification Passed"
         json_response["ocsp_validation_result"] = "OCSP Verification Passed"
       elif(crl_status=='CRLFAIL' or ocsp_status=='OCSPFAIL'):
-        json_response["validation_result"] = "Either OCSP and/or CRL check failed"
-        json_response["validation_result_short"] = "ERR"
+        json_response["validation_result"] = "Certificate Revoked!"
+        json_response["validation_result_short"] = "REV"
         json_response["ocsp_validation_result"] = json_response_["ocsp_validation_result"]
         json_response["result_color_hex"]="#9c200d"
       else:
@@ -97,8 +97,8 @@ def crl_buildjson (crl_status,json_response,hostname):
   elif (crl_status=='NOCRL'):
     [ocsp_status,json_response]=handle_ocsp(hostname)
     json_response=ocsp_buildjson(ocsp_status,json_response)
-    json_response["crl_validation_result"]="Certfificate does not have a CRL"
-    json_response["validation_result_short"] = "ERR"
+    #json_response["crl_validation_result"]="Certfificate does not have a CRL"
+    #json_response["validation_result_short"] = "ERR"
   elif (crl_status=='CRLFAIL'):
     json_response["validation_result"] = "CRL - Certificate Revoked"
     json_response["validation_result_short"] = "REV"
