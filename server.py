@@ -19,6 +19,7 @@ import hashlib
 import subprocess
 import os
 
+
 class Server(BaseHTTPRequestHandler):
   def do_HEAD(self):
     return
@@ -57,7 +58,7 @@ class Server(BaseHTTPRequestHandler):
         json_response["result_color_hex"]="#FF4500"
 
 
-    print(self.headers.get('crl-or-ocsp'))
+    #print(self.headers.get('crl-or-ocsp'))
     self.send_response(200)
     self.send_header("Content-type", "text/json")
     self.end_headers()
@@ -175,6 +176,52 @@ def handle_crl (hostname):
 
 
 def handle_ocsp (hostname):
+  host_hash=str(hashlib.md5(hostname.encode()).hexdigest())
+  resp_path=os.path.join(os.path.dirname(__file__), 'cache/resp_' + host_hash + '.der')
+
+  if(Path(resp_path).is_file()):
+    print('Found cached ocsp')
+    fin=open(resp_path, "rb")
+    ocsp_resp = x509.ocsp.load_der_ocsp_response(fin.read())
+    fin.close()
+
+    CurrentDateTime=datetime.utcnow()
+    NextUpdate=ocsp_resp.next_update
+    if(CurrentDateTime<NextUpdate):
+      print('Not Expired')
+      ctx = ssl.create_default_context()
+ 
+      s = ctx.wrap_socket(socket.socket(), server_hostname=hostname)
+      s.connect((hostname,443))
+      cert=s.getpeercert()
+      
+      organizationName=""
+      issuer_name=""
+      for t in cert['subject']:
+        if(t[0][0]=='organizationName'):
+          organizationName=t[0][1]
+      
+      for t in cert['issuer']:
+        if(t[0][0]=='organizationName'):
+          issuer_name=t[0][1]
+
+      json_response= {
+      # "result_color_hex" : result_color_hex,
+        #"validation_result" : validation_result,
+        "subject_organization" : organizationName,
+        "issuer_common_name" : "Issuer",
+        "issuer_organization": issuer_name,
+        "message" : "",
+        #"validation_result_short" : validation_result_short
+      }
+      if(str(ocsp_resp.certificate_status)=="OCSPCertStatus.GOOD"):
+        print(ocsp_resp.certificate_status)
+        return ['OCSPPASS',json_response]
+      elif(str(ocsp_resp.certificate_status)=="OCSPCertStatus.REVOKED"):
+        return ['OCSPFAIL',json_response]
+      else:
+        return ['OCSPUNKNOWN',json_response]
+
   dst = (hostname.encode("UTF-8"), 443)
   ctx = SSL.Context(SSL.SSLv23_METHOD)
   s = socket.create_connection(dst)
@@ -211,12 +258,12 @@ def handle_ocsp (hostname):
     "message" : "",
     #"validation_result_short" : validation_result_short
   }
-  host_hash=str(hashlib.md5(hostname.encode()).hexdigest())
+
+  
+  
   cert_path=os.path.join(os.path.dirname(__file__), 'cache/cert_' + host_hash + '.pem')
-  resp_path=os.path.join(os.path.dirname(__file__), 'cache/resp_' + host_hash + '.der')
   issuers_path=os.path.join(os.path.dirname(__file__), 'cache/issuers_' + host_hash + '.pem')
   
-
   fout=open(cert_path,"wb")
   fout.write(cert_arr[0])
   fout.close()
@@ -240,7 +287,7 @@ def handle_ocsp (hostname):
     ocspDomain=ocspDomain[0:slash_index]
 
   cmd_text="openssl ocsp -issuer " + issuers_path + " -cert " + cert_path +  " -text -url " + ocspUrl + " -noverify -no_signature_verify -no_cert_verify -respout " + resp_path + " -header \"HOST\" " + ocspDomain
-  print(cmd_text)
+  
   try:
     subprocess.check_output(cmd_text,shell=True)   
   except subprocess.CalledProcessError:
@@ -250,13 +297,13 @@ def handle_ocsp (hostname):
 
 
 
-  fin=open(os.path.join(os.path.dirname(__file__), 'cache/resp_' + host_hash + '.der'), "rb")
+  fin=open(resp_path, "rb")
   ocsp_resp = x509.ocsp.load_der_ocsp_response(fin.read())
   fin.close()
 
   os.remove(cert_path)
   os.remove(issuers_path)
-  os.remove(resp_path)
+  #os.remove(resp_path)
   
   if(str(ocsp_resp.certificate_status)=="OCSPCertStatus.GOOD"):
     print(ocsp_resp.certificate_status)
